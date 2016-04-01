@@ -1,0 +1,657 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Assignment 3</title>
+</head>
+
+<body>
+<h1>CSCI 3290 Computational Photography Assignment 3</h1>
+<p>Raymond Lo (1155009121)</p>
+<h2>Introduction</h2>
+<p>In this assignment, we aim to perform Image Matting. Image Matting is the separation of an image into a foreground image (F), a background image (B) and an alpha matte (alpha).</p>
+<p>The relationship between these components and the input color image (C) is given by:<br />
+  C = alpha * F + (1-alpha) * B<br />
+</p>
+<p>Matting is a very important topic in image process since it has many real life applications. Movie production, for example, requires separation of foreground objects from the background in order for speical effects to be applied to create a realistic scene. Another usage of matting is object recognition, in which computers automatically recognizes the key objects within an image.</p>
+<p>The most tradition method in matting is the Blue Screen Matting, which was developed when there even wasn't any digital computers, and matting was done directly with the analogue signal.</p>
+<p>In this project, different versions of Blue Screen Matting will be implemented. In addition, more advanced methods, including Poisson Matting and Bayesian Matting, will be introduced.</p>
+<p>&nbsp;</p>
+<h2>Part 1: Blue Screen Matting</h2>
+<p>We present three different Blue Screen Matting models and introduce how matting can be implemented under each model.</p>
+<h3>Model 1: No Blue</h3>
+<p>This model assumes that the foreground image contains no blue ( B_F = 0 ), while the background is purely blue ( R_B,G_B = 0 ).</p>
+<p>Therefore, just by considering the blue-channel, we can determine the alpha. <br />
+Let B_B denotes the background blue intensity and B denotes the image blue intensity, the alpha = 1 - B/B_B</p>
+<p>Here are some results of blue screen matting</p>
+<table width="900" border="1">
+  <tr>
+    <td align="center">Original</td>
+    <td align="center">Alpha</td>
+    <td align="center">Matte</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/01.png" width="300" height="189" /></td>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/alpha_01.jpg" width="300" height="189" /></td>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/matte_01.jpg" width="300" height="189" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/03.png" width="240" height="304" /></td>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/alpha_03.jpg" width="240" height="304" /></td>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/matte_03.jpg" width="240" height="304" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/24.png" width="300" height="206" /></td>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/alpha_24.jpg" width="300" height="206" /></td>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/matte_24.jpg" width="300" height="206" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/25.png" width="300" height="202" /></td>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/alpha_25.jpg" width="300" height="202" /></td>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/matte_25.jpg" width="300" height="202" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/27.png" width="300" height="231" /></td>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/alpha_27.jpg" width="300" height="231" /></td>
+    <td align="center"><img src="files/blueScreen_matting/NOBLUE/matte_27.jpg" width="300" height="231" /></td>
+  </tr>
+</table>
+<p>The &quot;No Blue&quot; assumption is a very strong one. Foreground of most natural images contains blue. <br />
+For example, white color (#FFFFFF) contains blue. Therefore, the &quot;No Blue&quot; assumption forces a portion of intensity, hue and saturation to be unreachable to the foreground.</p>
+<p>As shown in the results above, despite the easiness and accuracy of the alpha matte, the color of the resultant matte looks unnatural.</p>
+<p>Here are some results using my own photos:</p>
+<table width="960" border="1">
+  <tr>
+    <td align="center">Original</td>
+    <td align="center">Alpha</td>
+    <td align="center">Matte</td>
+  </tr>
+  <tr>
+    <td><a href="files/blueScreen_matting/NOBLUE/custom_01.jpg"><img src="files/blueScreen_matting/NOBLUE/custom_01.jpg" width="320" height="211" /></a></td>
+    <td><a href="files/blueScreen_matting/NOBLUE/alpha_custom_01.jpg"><img src="files/blueScreen_matting/NOBLUE/alpha_custom_01.jpg" width="320" height="211" /></a></td>
+    <td><a href="files/blueScreen_matting/NOBLUE/matte_custom_01.jpg"><img src="files/blueScreen_matting/NOBLUE/matte_custom_01.jpg" width="320" height="211" /></a></td>
+  </tr>
+  <tr>
+    <td><a href="files/blueScreen_matting/NOBLUE/custom_02.jpg"><img src="files/blueScreen_matting/NOBLUE/custom_02.jpg" width="320" height="480" /></a></td>
+    <td><a href="files/blueScreen_matting/NOBLUE/alpha_custom_02.jpg"><img src="files/blueScreen_matting/NOBLUE/alpha_custom_02.jpg" width="320" height="480" /></a></td>
+    <td><a href="files/blueScreen_matting/NOBLUE/matte_custom_02.jpg"><img src="files/blueScreen_matting/NOBLUE/matte_custom_02.jpg" width="320" height="480" /></a></td>
+  </tr>
+  <tr>
+    <td><a href="files/blueScreen_matting/NOBLUE/custom_03.jpg"><img src="files/blueScreen_matting/NOBLUE/custom_03.jpg" width="320" height="177" /></a></td>
+    <td><a href="files/blueScreen_matting/NOBLUE/alpha_custom_03.jpg"><img src="files/blueScreen_matting/NOBLUE/alpha_custom_03.jpg" width="320" height="177" /></a></td>
+    <td><a href="files/blueScreen_matting/NOBLUE/matte_custom_03.jpg"><img src="files/blueScreen_matting/NOBLUE/matte_custom_03.jpg" width="320" height="177" /></a></td>
+  </tr>
+</table>
+<p>As shown above, &quot;No Blue&quot; matting distorts the hue of saturation of the image.</p>
+<p>It is noticeable that there are often light yellow edges surrounding objects in the matte, which is caused by shadows. Shadow is grey, which is a mix of some blue, some red and some green. Removing the blue entirely leaves red and green components behind, hence the light yellow.</p>
+<h3>Model 2: Gray Foreground</h3>
+<p>This model assumes that the foreground image is gray ( R_F = G_F = B_F ) while background is purely blue ( R_B = G_B = 0 ). We slightly loosen the assumptions by choosing either ( R_F = B_F ) or ( G_F = B_F ).</p>
+<p>Here are some results of this form of blue screen matting. Both ( R_F = B_F ) and ( G_F = B_F ) were tested:</p>
+<table width="1500" border="1">
+  <tr>
+    <td align="center">Original</td>
+    <td align="center">Alpha (G_F=B_F)</td>
+    <td align="center">Alpha (R_F=B_F)</td>
+    <td align="center">Matte (G_F=B_F)</td>
+    <td align="center">Matte (R_F=B_F)</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/04.png" width="300" height="214" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/alpha1_04.jpg" width="300" height="214" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/alpha2_04.jpg" width="300" height="214" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/matte1_04.jpg" width="300" height="214" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/matte2_04.jpg" width="300" height="214" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/07.png" width="300" height="235" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/alpha1_07.jpg" width="300" height="235" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/alpha2_07.jpg" width="300" height="235" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/matte1_07.jpg" width="300" height="235" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/matte2_07.jpg" width="300" height="235" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/16.png" width="300" height="204" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/alpha1_16.jpg" width="300" height="204" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/alpha2_16.jpg" width="300" height="204" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/matte1_16.jpg" width="300" height="204" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/matte2_16.jpg" width="300" height="204" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/24.png" width="300" height="206" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/alpha1_24.jpg" width="300" height="206" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/alpha2_24.jpg" width="300" height="206" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/matte1_24.jpg" width="300" height="206" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/matte2_24.jpg" width="300" height="206" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/25.png" width="300" height="202" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/alpha1_25.jpg" width="300" height="202" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/alpha2_25.jpg" width="300" height="202" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/matte1_25.jpg" width="300" height="202" /></td>
+    <td align="center"><img src="files/blueScreen_matting/GRAY/matte2_25.jpg" width="300" height="202" /></td>
+  </tr>
+</table>
+<p>We can see that both assumptions gives similar results, but ( G_F = B_F ) works slightly better for this set of photos, mainly because the colors of the foreground objects are more inclined towards red, which makes ( R_F = B_F ) not as fit as ( G_F = B_F ). <br />
+A different result would be obtained if we use another set of photos with more green-ish colors.</p>
+<p>Again, the &quot;GRAY&quot; assumption is too strong. It forces the matte to have unrealistic hue and saturation.</p>
+<h3>Model 3: Triangulation</h3>
+<p>In this model, we no longer impose restrictions on the foreground. Instead, we use two versions of the same image with different background colors. With an increase in input, the equations can now be uniquely solved to get the foreground.</p>
+<p>Here are some results under this model of blue screen matting:</p>
+<table width="1200" border="1">
+  <tr>
+    <td align="center">Original 1</td>
+    <td align="center">Original 2</td>
+    <td align="center">Alpha</td>
+    <td align="center">Matte</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/06_1.png" width="300" height="258" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/06_2.png" width="300" height="258" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/alpha_06.jpg" width="300" height="258" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/matte_06.jpg" width="300" height="258" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/08_1.png" width="300" height="368" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/08_2.png" width="300" height="368" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/alpha_08.jpg" width="300" height="368" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/matte_08.jpg" width="300" height="368" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/16_1.png" width="300" height="204" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/16_2.png" width="300" height="204" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/alpha_16.jpg" width="300" height="204" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/matte_16.jpg" width="300" height="204" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/21_1.png" width="300" height="252" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/21_2.png" width="300" height="252" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/alpha_21.jpg" width="300" height="252" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/matte_21.jpg" width="300" height="252" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/27_1.png" width="300" height="231" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/27_2.png" width="300" height="231" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/alpha_27.jpg" width="300" height="231" /></td>
+    <td align="center"><img src="files/blueScreen_matting/TRIANGULATION/matte_27.jpg" width="300" height="231" /></td>
+  </tr>
+</table>
+<p>Finally we have a blue screen matting method that does not sacrifice actual colors.<br />
+  However, this is extremely hard to be applied in real life, since it requires two images of the same foreground but different background.</p>
+<p> If the second image is taken at a slight displacement or different angle from the first, the matting would not work.<br />
+  When taking actual photos, it is almost impossible to keep every object unchanged and just change the background before thaking a second picture.</p>
+<p>&nbsp;</p>
+<h2>Part 2: Poisson Matting</h2>
+<p>This model focuses on the gradient of the image. Under the assumption that color on both foreground and background images are smooth, change in color of the image is caused by change in alpha. Therefore, by setting gradient of alpha to be equal to that of the image, we get a Poisson equation which gives the alpha matte as solution.</p>
+<p>In addition to the original image, the user also needs to input a trimap which indicates three regions of the image: definite foreground, definite background, and undecided region. Alpha values for definite foreground and background are 1 and 0 respectively. The goal of the matting is to resolve alpha for the undecided region only.</p>
+<p>Below are the major steps of the implementation:</p>
+<ol>
+  <li>Initialize F and B for the undecided region, by taking the value of nearest definite pixel</li>
+  <li>Solve the Poisson equation to get the alpha values for the undecided region</li>
+  <li>Classify part of the undecided region into definite fore/background based on alpha values</li>
+</ol>
+<p>Steps 2 and 3 above are iterated for a number of times to enhance accuracy</p>
+<h2>Implementation Details</h2>
+<h3>1. Initialize F and B</h3>
+<p>As the very first step, we convert the image from color to grayscale before matting.</p>
+<p>For each point in the definite foreground region, F equals the image intensity while B equals 0, and vice versa for definite background.</p>
+<p>For each pixel in the undecided region, we set its F value to be equal to that of its nearest point in the definite foreground region, similarly for its B value. In MATLAB, this is achieved by creating a KDTreeSearcher and use its knnsearch() function. MATLAB's implementation is very efficient.</p>
+<p>The resultant F and B values of this region is highly uneven, so we apply a Gaussian filter to smoothen it before further processing. If there is no smoothing, the sharp jumps in F and B would cause irregularities in the alpha computed.</p>
+<h3>2. Solve Poisson equation for alpha</h3>
+<p>By taking derivative on the equation I = alpha * F + (1-alpha) * B,  gradient of alpha should be equal to the gradient of I divided by (F-B). To prevent singularity, we set the lower bound for the absolute value of (F-B) to be some small positive number epsilon.</p>
+<p>The gradient of I is computed and divided by (F-B). Then, we write the equations for solving alpha in matrix form. By matrix division, we get the alpha values, which are normalized to fit into [0,1]</p>
+<h3>3. Classify undecided region</h3>
+<p>We consider the points in the undecided region with very high (&gt;0.95) and very low (&lt;0.05) alpha value. If the image intensity at these points are very close to the F or B values, i.e. difference in intensity within a certain limit, then these points will be grouped into definite regions.</p>
+<p>After the trimap is updated by classification, we apply same procedures as step 1 to initialize F and B for the remaining undecided region. The F and B values are smoothed and then passed back into step 2 to solve for alpha.</p>
+<p>Step 2 and Step 3 are iterated for a number of times, usually 10 times is suffcient for results to converge.</p>
+<h3>Basic Implementation Results</h3>
+<p>Here are the results of basic implementation of Poisson Matting:</p>
+<table width="1200" border="1">
+  <tr>
+    <td align="center">Original</td>
+    <td align="center">Alpha</td>
+    <td align="center">Matte</td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/poisson_matting/1_1.png"><img src="files/poisson_matting/1_1.png" width="320" height="480" /></a></td>
+    <td align="center"><a href="files/poisson_matting/1_alpha.png"><img src="files/poisson_matting/1_alpha.png" width="320" height="480" /></a></td>
+    <td align="center"><a href="files/poisson_matting/1_matte.png"><img src="files/poisson_matting/1_matte.png" width="320" height="480" /></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/poisson_matting/2_1.png"><img src="files/poisson_matting/2_1.png" width="400" height="266" /></a></td>
+    <td align="center"><a href="files/poisson_matting/2_alpha.png"><img src="files/poisson_matting/2_alpha.png" width="400" height="266" /></a></td>
+    <td align="center"><a href="files/poisson_matting/2_matte.png"><img src="files/poisson_matting/2_matte.png" width="400" height="266" /></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/poisson_matting/4_1.png"><img src="files/poisson_matting/4_1.png" width="400" height="302" /></a></td>
+    <td align="center"><a href="files/poisson_matting/4_alpha.png"><img src="files/poisson_matting/4_alpha.png" width="400" height="302" /></a></td>
+    <td align="center"><a href="files/poisson_matting/4_matte.png"><img src="files/poisson_matting/4_matte.png" width="400" height="302" /></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/poisson_matting/5_1.png"><img src="files/poisson_matting/5_1.png" width="400" height="304" /></a></td>
+    <td align="center"><a href="files/poisson_matting/5_alpha.png"><img src="files/poisson_matting/5_alpha.png" width="400" height="304" /></a></td>
+    <td align="center"><a href="files/poisson_matting/5_matte.png"><img src="files/poisson_matting/5_matte.png" width="400" height="304" /></a></td>
+  </tr>
+</table>
+<p>The running time of each of them are: 4.5s, 14.4s, 9.7s, 4.2s, which are roughly linear with the number of pixels each photo has.</p>
+<p>The algorithm was able to matte out the fine details around the edges, such as the handrail of the lighthouse, veins on the wings of the dragonfly, hair and fur.However, it also introduced artifacts such as singular points and noise.<br />
+When a point is wrongly classified, its neighboring points are likely to be affected as well.</p>
+<p>Next, we study the effects of different custom parameters used in the model to see how the algorithm can be optimized.</p>
+<h2>Optimization</h2>
+<h3>1. Epsilon in Poisson equation</h3>
+<p>The Poisson equation state that the gradient of alpha equals gradient of image divided by (F-B). <br />
+To avoid singularity, we introduce epsilon as the minimum absolute value for (F-B). Initially, we set the value of epsilon as 0.001.<br />
+Now, different values of epsilon are tested:</p>
+<table width="2000" border="1">
+  <tr>
+    <td width="239" align="center">Epsilon = 0.001 (Basic)</td>
+    <td width="1047" align="center">Epsilon = 0.01</td>
+    <td width="59" align="center">Epsilon = 0.1</td>
+    <td width="59" align="center">Epsilon = 0.5</td>
+    <td width="62" align="center">Epsilon = 1</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/poisson_matting/1_alpha.png" width="320" height="480" /></td>
+    <td align="center"><img src="files/poisson_matting/1_alpha_1.png" width="320" height="480" /></td>
+    <td align="center"><img src="files/poisson_matting/1_alpha_2.png" width="320" height="480" /></td>
+    <td align="center"><img src="files/poisson_matting/1_alpha_3.png" width="320" height="480" /></td>
+    <td align="center"><img src="files/poisson_matting/1_alpha_4.png" width="320" height="480" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/poisson_matting/2_alpha.png" width="400" height="266" /></td>
+    <td align="center"><img src="files/poisson_matting/2_alpha_1.png" width="400" height="266" /></td>
+    <td align="center"><img src="files/poisson_matting/2_alpha_2.png" width="400" height="266" /></td>
+    <td align="center"><img src="files/poisson_matting/2_alpha_3.png" width="400" height="266" /></td>
+    <td align="center"><img src="files/poisson_matting/2_alpha_4.png" width="400" height="266" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/poisson_matting/4_alpha.png" width="400" height="302" /></td>
+    <td align="center"><img src="files/poisson_matting/4_alpha_1.png" width="400" height="302" /></td>
+    <td align="center"><img src="files/poisson_matting/4_alpha_2.png" width="400" height="302" /></td>
+    <td align="center"><img src="files/poisson_matting/4_alpha_3.png" width="400" height="302" /></td>
+    <td align="center"><img src="files/poisson_matting/4_alpha_4.png" width="400" height="302" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/poisson_matting/5_alpha.png" width="400" height="304" /></td>
+    <td align="center"><img src="files/poisson_matting/5_alpha_1.png" width="400" height="304" /></td>
+    <td align="center"><img src="files/poisson_matting/5_alpha_2.png" width="400" height="304" /></td>
+    <td align="center"><img src="files/poisson_matting/5_alpha_3.png" width="400" height="304" /></td>
+    <td align="center"><img src="files/poisson_matting/5_alpha_4.png" width="400" height="304" /></td>
+  </tr>
+</table>
+<p>As epsilon increases, the Poisson matte gets smoother with fewer artifacts.<br />
+  The reason is that as epsilon increases, the cap for 1/(F-B) is reduced, so the values obtained from solving Poisson equations are less likely to be extreme.</p>
+<p>When epsilon=0.1, the alpha matte is sharp and contains almost no artifact. When epsilon&gt;0.5, even though there is no artifact, the edges of the matte starts to blur, i.e. over-smoothed. Therefore, 0.1 is the optimal value for epsilon.</p>
+<h3>2. Gaussian Filter</h3>
+<p>Gaussian filter is applied to smoothen (F-B) before it is inputted into Poisson equation. The basic implementation uses a 5-by-5 Gaussian filter with sigma=2. <br />
+Below we experiment two other Gaussian filters, one with less smoothing, and another one with more smoothing.<br />
+Below are the results when epsilon=0.01:
+</p>
+<table width="1200" border="1">
+  <tr>
+    <td align="center">3-by-3, sigma=0.5 (Less smoothing)</td>
+    <td align="center">5-by-5, sigma=2 (Basic)</td>
+    <td align="center">10-by-10, sigma=4 (More smoothing)</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/poisson_matting/1_alpha_5.png" width="320" height="480" /></td>
+    <td align="center"><img src="files/poisson_matting/1_alpha_1.png" width="320" height="480" /></td>
+    <td align="center"><img src="files/poisson_matting/1_alpha_6.png" width="320" height="480" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/poisson_matting/2_alpha_5.png" width="400" height="266" /></td>
+    <td align="center"><img src="files/poisson_matting/2_alpha_1.png" width="400" height="266" /></td>
+    <td align="center"><img src="files/poisson_matting/2_alpha_6.png" width="400" height="266" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/poisson_matting/4_alpha_5.png" width="400" height="302" /></td>
+    <td align="center"><img src="files/poisson_matting/4_alpha_1.png" width="400" height="302" /></td>
+    <td align="center"><img src="files/poisson_matting/4_alpha_6.png" width="400" height="302" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/poisson_matting/5_alpha_5.png" width="400" height="304" /></td>
+    <td align="center"><img src="files/poisson_matting/5_alpha_1.png" width="400" height="304" /></td>
+    <td align="center"><img src="files/poisson_matting/5_alpha_6.png" width="400" height="304" /></td>
+  </tr>
+</table>
+<p>Generally, with greater smoothing, amount of artifact is slightly reduced. <br />
+However, the effect is insignificant, so we suggest to keep the basic implementation.</p>
+<h3>3. Nearnest Neighbor</h3>
+<p>When we initialize F and B, we take the value of the nearest neighbor. The resultant F and B are highly uneven.<br />
+  But what if instead of the nearest neighbor, we take the average of the nearest k neighbors?<br />
+Below are the results for different values of k. We take epsilon=0.01:</p>
+<table width="2000" border="1">
+  <tr>
+    <td align="center">k=1 (Basic)</td>
+    <td align="center">k=2</td>
+    <td align="center">k=4</td>
+    <td align="center">k=8</td>
+    <td align="center">k=16</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/poisson_matting/1_alpha_1.png" width="320" height="480" /></td>
+    <td align="center"><img src="files/poisson_matting/1_alpha_7.png" width="320" height="480" /></td>
+    <td align="center"><img src="files/poisson_matting/1_alpha_8.png" width="320" height="480" /></td>
+    <td align="center"><img src="files/poisson_matting/1_alpha_9.png" width="320" height="480" /></td>
+    <td align="center"><img src="files/poisson_matting/1_alpha_10.png" width="320" height="480" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/poisson_matting/2_alpha_1.png" width="400" height="266" /></td>
+    <td align="center"><img src="files/poisson_matting/2_alpha_7.png" width="400" height="266" /></td>
+    <td align="center"><img src="files/poisson_matting/2_alpha_8.png" width="400" height="266" /></td>
+    <td align="center"><img src="files/poisson_matting/2_alpha_9.png" width="400" height="266" /></td>
+    <td align="center"><img src="files/poisson_matting/2_alpha_10.png" width="400" height="266" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/poisson_matting/4_alpha_1.png" width="400" height="302" /></td>
+    <td align="center"><img src="files/poisson_matting/4_alpha_7.png" width="400" height="302" /></td>
+    <td align="center"><img src="files/poisson_matting/4_alpha_8.png" width="400" height="302" /></td>
+    <td align="center"><img src="files/poisson_matting/4_alpha_9.png" width="400" height="302" /></td>
+    <td align="center"><img src="files/poisson_matting/4_alpha_10.png" width="400" height="302" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/poisson_matting/5_alpha_1.png" width="400" height="304" /></td>
+    <td align="center"><img src="files/poisson_matting/5_alpha_7.png" width="400" height="304" /></td>
+    <td align="center"><img src="files/poisson_matting/5_alpha_8.png" width="400" height="304" /></td>
+    <td align="center"><img src="files/poisson_matting/5_alpha_9.png" width="400" height="304" /></td>
+    <td align="center"><img src="files/poisson_matting/5_alpha_10.png" width="400" height="304" /></td>
+  </tr>
+</table>
+<p>As k increases, we notice a general improvement of the matting.</p>
+<p>As for running time, it slightly increases with k. The table below shows the running time for the 4 pics (in seconds):</p>
+<table width="250" border="1">
+  <tr>
+    <td align="center">k=1</td>
+    <td align="center">k=2</td>
+    <td align="center">k=4</td>
+    <td align="center">k=8</td>
+    <td align="center">k=16</td>
+  </tr>
+  <tr>
+    <td align="right">5.1</td>
+    <td align="right">5.3</td>
+    <td align="right">5.4</td>
+    <td align="right">5.5</td>
+    <td align="right">5.7</td>
+  </tr>
+  <tr>
+    <td align="right">16.7</td>
+    <td align="right">17.1</td>
+    <td align="right">17.8</td>
+    <td align="right">18.2</td>
+    <td align="right">19.0</td>
+  </tr>
+  <tr>
+    <td align="right">10.0</td>
+    <td align="right">10.5</td>
+    <td align="right">10.3</td>
+    <td align="right">10.7</td>
+    <td align="right">11.1</td>
+  </tr>
+  <tr>
+    <td align="right">4.5</td>
+    <td align="right">4.7</td>
+    <td align="right">4.7</td>
+    <td align="right">4.8</td>
+    <td align="right">5.0</td>
+  </tr>
+</table>
+<p>Setting k=4 stikes a good balance between image quality and computation efficiency.</p>
+<h2>Optimized Poisson Matting Algorithm</h2>
+<p>We set epsilon=0.1, k=4, and use a 5-by-5 Gaussian filter with sigma=2 for the algorithm.</p>
+<p>Note that we have been working on grayscale images above, but the algorithm can be applied to color images.</p>
+<p>After computing the alpha for the grayscale version of the image, we initialize F and B with nearest neighbors for each color channel. The result is the desired color matte.</p>
+<p>Below are the results:</p>
+<table width="1200" border="1">
+  <tr>
+    <td align="center">Original</td>
+    <td align="center">Alpha</td>
+    <td align="center">Matte</td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/poisson_matting/1_1.png"><img src="files/poisson_matting/1_1.png" width="320" height="480" /></a></td>
+    <td align="center"><a href="files/poisson_matting/1_alpha_C.png"><img src="files/poisson_matting/1_alpha_C.png" width="320" height="480" /></a></td>
+    <td align="center"><a href="files/poisson_matting/1_matte_C.png"><img src="files/poisson_matting/1_matte_C.png" width="320" height="480" /></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/poisson_matting/2_1.png"><img src="files/poisson_matting/2_1.png" width="400" height="266" /></a></td>
+    <td align="center"><a href="files/poisson_matting/2_alpha_C.png"><img src="files/poisson_matting/2_alpha_C.png" width="400" height="266" /></a></td>
+    <td align="center"><a href="files/poisson_matting/2_matte_C.png"><img src="files/poisson_matting/2_matte_C.png" width="400" height="266" /></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/poisson_matting/4_1.png"><img src="files/poisson_matting/4_1.png" width="400" height="302" /></a></td>
+    <td align="center"><a href="files/poisson_matting/4_alpha_C.png"><img src="files/poisson_matting/4_alpha_C.png" width="400" height="302" /></a></td>
+    <td align="center"><a href="files/poisson_matting/4_matte_C.png"><img src="files/poisson_matting/4_matte_C.png" width="400" height="302" /></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/poisson_matting/5_1.png"><img src="files/poisson_matting/5_1.png" width="400" height="304" /></a></td>
+    <td align="center"><a href="files/poisson_matting/5_alpha_C.png"><img src="files/poisson_matting/5_alpha_C.png" width="400" height="304" /></a></td>
+    <td align="center"><a href="files/poisson_matting/5_matte_C.png"><img src="files/poisson_matting/5_matte_C.png" width="400" height="304" /></a></td>
+  </tr>
+</table>
+<p>Notice that for the third picture, the matting result of the top part is stilll not quite satisfactory due to the fact that the undecided region touches the top border, which means fewer boundary conditions for solving alpha.</p>
+<p>Here are some results using my own photos:</p>
+<table width="1200" border="1">
+  <tr>
+    <td align="center">Original</td>
+    <td align="center">Trimap</td>
+    <td align="center">Alpha</td>
+    <td align="center">Matte</td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/poisson_matting/custom_01.jpg"><img src="files/poisson_matting/custom_01.jpg" width="400" height="302" /></a></td>
+    <td align="center"><a href="files/poisson_matting/custom_01-mask.png"><img src="files/poisson_matting/custom_01-mask.png" width="400" height="302" /></a></td>
+    <td align="center"><a href="files/poisson_matting/custom_01_alpha.png"><img src="files/poisson_matting/custom_01_alpha.png" width="400" height="302" /></a></td>
+    <td align="center"><a href="files/poisson_matting/custom_01_matte.png"><img src="files/poisson_matting/custom_01_matte.png" width="400" height="302" /></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/poisson_matting/custom_02.jpg"><img src="files/poisson_matting/custom_02.jpg" width="400" height="302" /></a></td>
+    <td align="center"><a href="files/poisson_matting/custom_02-mask.png"><img src="files/poisson_matting/custom_02-mask.png" width="400" height="302" /></a></td>
+    <td align="center"><a href="files/poisson_matting/custom_02_alpha.png"><img src="files/poisson_matting/custom_02_alpha.png" width="400" height="302" /></a></td>
+    <td align="center"><a href="files/poisson_matting/custom_02_matte.png"><img src="files/poisson_matting/custom_02_matte.png" width="400" height="302" /></a></td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h2>Part 3: Bayesian Matting</h2>
+<p>The key idea to Bayesian Matting is that, in either F or B, color of pixels should be similar. Therefore, we measure the likelihood of whether a pixel in the undecided region belongs to F or B, based on the cluster of colors from the definite fore/background.</p>
+<p>Below are the major steps of the implementation:</p>
+<ol>
+  <li>Initialize alpha for the undecided region, by taking the average value of its neighborhood</li>
+  <li>At each pixel in undecided region, compute the weighted average color and covariance matrix</li>
+  <li>Using estimated alpha value, solve for F and B that maximizes the likelihood</li>
+  <li>Calculate the alpha value based on F and B</li>
+</ol>
+<p>Steps 2 to 4 are repeated for all pixels in the undecided region. We first work on the pixels adjacent to the definite fore/backgrounds, and then work on interior undecided pixels.</p>
+<h2>Implementation Details</h2>
+<h3>1. Initialize Alpha</h3>
+<p>For the definite foreground, alpha=1. For definite background, alpha=0.</p>
+<p>For the undecided region, we first initialize those pointson the boundary, i.e. adjacent to definite fore/background.<br />
+In order to locate these points, we create a mask where the value is 0 for undecided region and 1 for definite fore/background.<br />
+Then, we apply a 3-by-3 laplacian filter on the mask. All the boundary pixels would become positive, while other pixels become either 0 or negative. <br />
+Thus, we have extracted all the boundary pixels.</p>
+<p>For each boundary pixel, we consider its neighborhood.<br />
+  Its alpha value is initialized to be the mean of those of the determined pixels in the neighborhood.
+  <br />
+</p>
+<p>After we have initialized all the boundary pixels, the trimap is updated and we filter again to get the new boundary pixels. This process is repeated until all pixels in the undecided region has been initialized.</p>
+<h3>2. Compute weighted average color and covariance matrix</h3>
+<p>For each undecided pixel, we compute values of F and B that maximizes the likelihood of the observed color, a result derived from Bayes' theorem (hence the name 'Bayesian Matting').</p>
+<p>To do so, we group its nearby F colors into one cluster and B colors into another one. We view the distribution of the F and B colors at that pixel to follow Gaussian distribution. Then, likelihood is determined by the average color of each cluster and the color distances of the observed color from the average colors.</p>
+<p>The closer the neighbor, the more likely its F,B colors are close to that of the undecided pixel. <br />
+  Therefore, we assign weights on pixels in its neighborhood.<br />
+The weights are assigned to follow a spatial Gaussian distribution.</p>
+<p>In addition to spatial distance, alpha values are also important for weighing the neighbors. For pixels with alpha close to 1, we are confident with its F value so we assign more weight to this neighbor when calculating F.<br />
+  Similarly, alpha near 0 gives confidence on the B values.<br />
+Therefore, in addition to spatial distance weights, we multiply them with alpha^2 for calculation of F, and (1-alpha)^2 for calculation of B.</p>
+<p>After calculating the weights, we can get the weighted averages of F and B colors of those decided pixels in the neighborhood.<br />
+Next, we calculate the covariance matrix at each pixel. The covariance matrix indicates the relationship among the three channels (R,G,B) for the colors in the cluster. We weigh them using the same weights as above.</p>
+<h3>3. Solve for likelihood-maximizing F and B colors</h3>
+<p>From taking derivative of the Bayesian formula, we can derive the formula for solving likelihood-maximizing F and B colors.<br />
+  The equation depends on inverse of the covariance matrix, average color and the variance of 
+  image colors.<br />
+(Details of the equation and derivation can be found at http://grail.cs.washington.edu/projects/digital-matting/papers/cvpr2001.pdf)</p>
+<h3>4. Calculate alpha from F, B and image</h3>
+<p>By fixing F and B, the likelihood function becomes a quadratic equation in alpha.<br />
+A closed-form solution in F,B,C is obtained, so alpha is found.</p>
+<p>We conduct steps 2-4 on the boundary undecided pixels. After they have been processed, we proceed with the new boundary pixels, the same sequence as in step 1 when we initialize alpha.</p>
+<h3>Basic Implementation Results</h3>
+<p>Here are the results of basic implementation of Bayesian Matting:</p>
+<table width="1500" border="1">
+  <tr>
+    <td align="center">Original</td>
+    <td align="center">Alpha</td>
+    <td align="center">Matte</td>
+    <td align="center">F</td>
+    <td align="center">B</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/bayesian_matting/1.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_alpha.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_matte.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_F.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_B.png" width="169" height="169" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/bayesian_matting/2.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_alpha.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_matte.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_F.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_B.png" width="128" height="192" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/bayesian_matting/3.png" width="300" height="199" /></td>
+    <td align="center"><img src="files/bayesian_matting/3_alpha.png" width="300" height="199" /></td>
+    <td align="center"><img src="files/bayesian_matting/3_matte.png" width="300" height="199" /></td>
+    <td align="center"><img src="files/bayesian_matting/3_F.png" width="300" height="199" /></td>
+    <td align="center"><img src="files/bayesian_matting/3_B.png" width="300" height="199" /></td>
+  </tr>
+</table>
+<p>We see that the results are not quite satisfactory. </p>
+<p> The first one was partly acceptable but part of the hair still got trimmed away in the matte.</p>
+<p>For the second picture, the matte introduced &quot;shadows&quot; around the lighthouse. They were colors that were wrongly classified as foreground.</p>
+<p>For the last picture, the matting was a mess as it failed to recognize the fur of the object.<br />
+  Moreover, F and B colors generated were significantly off.<br />
+  This is due to the fact that the background mainly consists of two different colors. The distribution is bimodal.<br />
+Meanwhile in the basic Bayesian model, we assume the colors to follow Gaussian distribution with single mode.</p>
+<h2>Optimization</h2>
+<p> We try to optimize the algorithm by changing the custom parameters in the basic implementation.<br />
+  One of the key custom parameters is sigma_C, which is the
+  color variance of the image.<br />
+  In basic implementation, 
+sigma_C=0.02. We try different values to see if results improve.</p>
+<table width="1200" border="1">
+  <tr>
+    <td align="center">sigma_C=0.01</td>
+    <td align="center">sigma_C=0.02 (Basic)</td>
+    <td align="center">sigma_C=0.05</td>
+    <td align="center">sigma_C=0.1</td>
+    <td align="center">sigma_C=0.2</td>
+    <td align="center">sigma_C=0.5</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/bayesian_matting/1_alpha_1.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_alpha.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_alpha_2.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_alpha_3.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_alpha_4.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_alpha_5.png" width="169" height="169" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/bayesian_matting/2_alpha_1.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_alpha.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_alpha_2.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_alpha_3.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_alpha_4.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_alpha_5.png" width="128" height="192" /></td>
+  </tr>
+</table>
+<p>We see that the results are much better with larger values of sigma_C.<br />
+For example, when sigma_C=0.2, matte results as follow:</p>
+<table width="1200" border="1">
+  <tr>
+    <td align="center">Original</td>
+    <td align="center">Basic</td>
+    <td align="center">New</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/bayesian_matting/1.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_matte.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_matte_4.png" width="169" height="169" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/bayesian_matting/2.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_matte.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_matte_4.png" width="128" height="192" /></td>
+  </tr>
+</table>
+<p>Next, we try the method on higher-res images:</p>
+<table width="1200" border="1">
+  <tr>
+    <td align="center">Original</td>
+    <td align="center">Alpha</td>
+    <td align="center">Matte</td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/bayesian_matting/4.png"><img src="files/bayesian_matting/4.png" width="320" height="480" /></a></td>
+    <td align="center"><a href="files/bayesian_matting/4_alpha.png"><img src="files/bayesian_matting/4_alpha.png" width="320" height="480" /></a></td>
+    <td align="center"><a href="files/bayesian_matting/4_matte.png"><img src="files/bayesian_matting/4_matte.png" width="320" height="480" /></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/bayesian_matting/5.png"><img src="files/bayesian_matting/5.png" width="400" height="266" /></a></td>
+    <td align="center"><a href="files/bayesian_matting/5_alpha.png"><img src="files/bayesian_matting/5_alpha.png" width="400" height="266" /></a></td>
+    <td align="center"><a href="files/bayesian_matting/5_matte.png"><img src="files/bayesian_matting/5_matte.png" width="400" height="266" /></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="files/bayesian_matting/6.png"><img src="files/bayesian_matting/6.png" width="400" height="302" /></a></td>
+    <td align="center"><a href="files/bayesian_matting/6_alpha.png"><img src="files/bayesian_matting/6_alpha.png" width="400" height="302" /></a></td>
+    <td align="center"><a href="files/bayesian_matting/6_matte.png"><img src="files/bayesian_matting/6_matte.png" width="400" height="302" /></a></td>
+  </tr>
+</table>
+<p>The photos take 22s,70s and 27s to process respectively. Computation time is roughly linear with number of pixels.</p>
+<p>Again, there is still room of improvement for the algorithm.</p>
+<p>The last one failed in Bayesian matting mainly because the color of the hair (light brown) is much closer to the background color (brown) than the color of the clothes (bluish green). <br />
+Therefore, the algorithm treated the hair as background object.</p>
+<h2>K-means clustering</h2>
+<p>Finally, we try to address the problem where foreground and background consists of several color clusters.</p>
+<p>We modify our algorithm to partition the fore/background colors into several clusters. In MATLAB, this is implemented with function kmean(). <br />
+  Then, for each pair of clusters, we calculate the likelihood and choose the pair with the highest likelihood.<br />
+The pair of clusters is used to calculate the optimal F and B.</p>
+<p>Here are the results:</p>
+<table width="900" border="1">
+  <tr>
+    <td align="center">Original</td>
+    <td align="center">Alpha</td>
+    <td align="center">Matte</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/bayesian_matting/1.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_alpha_k.png" width="169" height="169" /></td>
+    <td align="center"><img src="files/bayesian_matting/1_matte_k.png" width="169" height="169" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/bayesian_matting/2.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_alpha_k.png" width="128" height="192" /></td>
+    <td align="center"><img src="files/bayesian_matting/2_matte_k.png" width="128" height="192" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="files/bayesian_matting/3.png" width="300" height="199" /></td>
+    <td align="center"><img src="files/bayesian_matting/3_alpha_k.png" width="300" height="199" /></td>
+    <td align="center"><img src="files/bayesian_matting/3_matte_k.png" width="300" height="199" /></td>
+  </tr>
+</table>
+<p> The implementation requires further refinement.</p>
+<p>&nbsp;</p>
+<h2>Conclusion</h2>
+<p>Among the three matting methods discussed:</p>
+<p>BlueScreen Matting is the easiest to implement and quickest in computation, but it imposes strict restrictions on the image and very likely to distort colors.</p>
+<p>Poisson Matting gives quite reliable and accurate results if fine tuned correclty. Its performance is consistent and it does not impose any restriction on the image, hence very applicable in real life.</p>
+<p>Bayesian Matting also imposes no restriction on the image. However, further work is required on improving the implementation in order for the results to be satisfactory.</p>
+<p>&nbsp;</p>
+<h2>References</h2>
+<ol>
+  <li><a href="http://grail.cs.washington.edu/projects/digital-matting/papers/cvpr2001.pdf">http://grail.cs.washington.edu/projects/digital-matting/papers/cvpr2001.pdf</a></li>
+  <li><a href="http://www.cse.cuhk.edu.hk/leojia/all_project_webpages/Poisson matting/poisson_matting.html">http://www.cse.cuhk.edu.hk/leojia/all_project_webpages/Poisson%20matting/poisson_matting.html</a></li>
+  <li><a href="https://en.wikipedia.org/wiki/K-means_clustering">https://en.wikipedia.org/wiki/K-means_clustering</a><br />
+  </li>
+</ol>
+</body>
+</html>

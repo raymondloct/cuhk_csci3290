@@ -1,0 +1,283 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Assignment 2</title>
+</head>
+
+<body>
+<h1>CSCI 3290 Computational Photography Assignment 2</h1>
+<p>Raymond Lo (1155009121)</p>
+<h2>Introduction</h2>
+<p>In this assignment, we aim to manipulate the colors of images.</p>
+<p>The first part is related to Color Transfer, where we apply the color style of one image onto a different image.</p>
+<p>The second part is Decolorization. 
+It is an important topic which is closely related to our daily life. 
+When we print out documents, we often print in grayscale to save costs. 
+However, color images may become unrecognizable after printing if different colors are mapped to the same grayscale color. 
+A good decolorization algorithm should preserve the observable color differences as much as possible in the grayscale output.</p>
+<p>After decolorization, we implement a new metric to quantitatively measure the performance of the decolorization.</p>
+<p>&nbsp;</p>
+<h2>Part 1: Color Transfer</h2>
+<p>Reference: http://www.cs.utah.edu/~shirley/papers/ColorTransfer.pdf</p>
+<p>Step 1: Convert the input images from RGB to Lab color space</p>
+<p>Step 2: Calculate the mean and standard deviation for each channel of the source and the target</p>
+<p>Step 3: Apply the color style of the source image (i.e. how much each pixel is deviated from the mean for each channel) to the target image (after adjusting for standard deviation)</p>
+<p>Step 4: Convert the resultant image back to RGB</p>
+<p>&nbsp;</p>
+<h2>Results</h2>
+<table border="1">
+<tr><td align="center">Source Image</td><td align="center">Target Image</td><td align="center">Result</td></tr>
+<tr><td><img src="files/color_transfer/ocean_day.jpg" height="335" width="500"/></td><td><img src="files/color_transfer/ocean_sunset.jpg" height="375" width="500"/></td><td><img src="files/color_transfer/1.jpg" height="335" width="500"/></td></tr>
+<tr><td><img src="files/color_transfer/woods.jpg" height="375" width="500"/></td><td><img src="files/color_transfer/autumn.jpg" height="365" width="500"/></td><td><img src="files/color_transfer/2.jpg" height="375" width="500"/></td></tr>
+<tr><td><img src="files/color_transfer/storm.jpg" height="375" width="500"/></td><td><img src="files/color_transfer/ocean_day.jpg" height="335" width="500"/></td><td><img src="files/color_transfer/4.jpg" height="375" width="500"/></td></tr>
+</table>
+<p>&nbsp;</p>
+<h2>Part 2: Basic Decolorization</h2>
+<p>Step 1: Convert the input images from RGB to Lab color space</p>
+<p>Step 2: Compute the Euclidean Lab color distance for neighboring pixels</p>
+<p>Step 3: Construct equations for grayscale values such that difference in intensity between neighboring pixels equals Lab color distance</p>
+<p>Step 4: Solve the linear equations to get the grayscale values of each pixel</p>
+<p>&nbsp;</p>
+<h2>Implementation Details</h2>
+<h3>1. Conversion into Lab color space</h3>
+<p>The conversion algorithm used here is different from that of Part 1. 
+The main reason is that even though the conversion works for Part 1, the range of mapping is not normalized.
+This distorts the Euclidean distance which is a crucial part of the decolorization algorithm.</p>
+<p>Instead, the RGB colors are first converted into CIEXYZ space, which is then converted into CIELAB space.
+Standard methods were applied.</p>
+<p>Reference: http://en.wikipedia.org/wiki/SRGB, http://en.wikipedia.org/wiki/Lab_color_space</p>
+<h3>2. Matrix Representation of the linear equations</h3>
+<p>To solve the system of linear equations, we first represent the grayscale image with an mxn vector G, where each element corresponds the intensity at a pixel.</p>
+<p>Then, we construct a sparse matrix A that represents the equations. Each pixel has two neighbors, so there are 2mn rows in the sparse matrix.</p>
+<p>As the target, we represent the Lab color distance for each pair of neighbors with vector Delta.</p>
+<p>The equation becomes: AG=Delta. There are two ways to solve the system via MATLAB, either "pinv()" to invert the matrix A, or to solve directly with "mldivide \".</p>
+<p>In theory, the two methods should generate the same output. However, in practice, their performance are extremely different.</p>
+<p>For a 50x50 image, pinv() took 21.25s while "\" took merely 0.0084s. Furthermore, when trying pinv() on a 100x100 image, the computer simply doesn't have enough storage space. In no way should pinv() be used for this task.</p>
+<p>The reason is that computing matrix invesre is prohibitively expensive. Time complexity is O(n^3). Also, it takes O(n^2) memory space. 
+Meanwhile, "\" employs various matrix decomposition techniques that not only preserves the sparsity of the matrix, but also runs in O(n^2) time. 
+In our case here, for a mxn image, running time is O(m^3 n^3) vs O(m^2 n^2) respectively, hence the tremendous time saved with "\"</p>
+<p>Reference: http://en.wikipedia.org/wiki/Computational_complexity_of_mathematical_operations, http://www.mathworks.com/help/matlab/ref/mldivide.html</p>
+<p>&nbsp;</p>
+<h2>Part 3: Decolorization Evaluation</h2>
+<p>Step 1: Convert the input images from RGB to Lab color space</p>
+<p>Step 2: Compute the Euclidean Lab color distance for neighboring pixels</p>
+<p>Step 3: Count the number of pairs of neighbors with distance above given threshold</p>
+<p>Step 4: Among those pairs counted in step 3, count the number of pairs where the grayscale also exceeds the threshold</p>
+<p>Step 5: Output Color Contrast Preserving Ratio (CCPR), which is the proportion of value from step 4 out of the value from step 3.</p>
+<p>&nbsp;</p>
+<h2>Results</h2>
+<table border="1">
+<tr><td align="center">Source</td><td align="center">Decolorized</td><td align="center">CCPR</td></tr>
+<tr><td><img src="files/color2gray/1.png"/></td><td><img src="files/color2gray/basic_1.jpg"/></td><td align="center">0.1765</td></tr>
+<tr><td><img src="files/color2gray/2.png"/></td><td><img src="files/color2gray/basic_2.jpg"/></td><td align="center">0.6021</td></tr>
+<tr><td><img src="files/color2gray/3.png"/></td><td><img src="files/color2gray/basic_3.jpg"/></td><td align="center">0.3968</td></tr>
+<tr><td><img src="files/color2gray/4.png"/></td><td><img src="files/color2gray/basic_4.jpg"/></td><td align="center">0.2718</td></tr>
+<tr><td><img src="files/color2gray/5.png"/></td><td><img src="files/color2gray/basic_5.jpg"/></td><td align="center">0.3235</td></tr>
+<tr><td><img src="files/color2gray/6.png"/></td><td><img src="files/color2gray/basic_6.jpg"/></td><td align="center">0.3979</td></tr>
+<tr><td><img src="files/color2gray/7.png"/></td><td><img src="files/color2gray/basic_7.jpg"/></td><td align="center">0.5881</td></tr>
+<tr><td><img src="files/color2gray/8.png"/></td><td><img src="files/color2gray/basic_8.jpg"/></td><td align="center">0.4514</td></tr>
+<tr><td><img src="files/color2gray/9.png"/></td><td><img src="files/color2gray/basic_9.jpg"/></td><td align="center">0.1721</td></tr>
+<tr><td><img src="files/color2gray/10.png"/></td><td><img src="files/color2gray/basic_10.jpg"/></td><td align="center">0.2484</td></tr>
+</table>
+<p>&nbsp;</p>
+
+<h2>Part 4: Weak Color Order Contrast Preserving Decolorization (*Extra Credit)</h2>
+<p>The basic algorithm above determines the color order through the L channel of the image in Lab space. 
+While this works well for colors that are strongly ordered (i.e. one color exceeds another in all three R,G,B channels), it imposes order on other pairs that human don't really distinguish which is "brighter". 
+For example, different people may perceive the intensities of yellow and green differently, so there is not a really definitive order how these two colors should be arranged. 
+As a result, the output from the above algo is uncessarily restricted.</p>
+<p>We would like to implement a new method that removes the requirement on strict ordering of color, i.e. a weak color ordering. 
+This would allow more degree of freedom in decolorization, thus a better output with respect to human vision.</p>
+<p>&nbsp;</p>
+<h2>Implementation Details</h2>
+<p>Reference: http://www.cse.cuhk.edu.hk/~leojia/papers/decolorization_ijcv14.pdf</p>
+<p>We define a parametric decolorization function with 9 polynomial terms: r,g,b,rg,rb,gb,r^2,g^2,b^2, and we let grayscale image g to be a weighted average of these 9 sub-images.</p>
+<p>To find the best fit, we define an Energy function for each neighbor pair.
+We assume the grayscale difference of two pixels follow Normal Distribution with mean = Lab color distance, and the value of the Energy function is given by the probability density function.</p>
+<p>However, for color pairs without a strong order relationship, we allow either mean = positive or negative of the Lab color distance with equal probability.</p>
+<p>Energy function of the image is the product of the energy functions for every neighbor pair.
+The parameters to this function are the 9 sub-image weights. 
+We try to minimize the Energy function by adjusting the weights.</p>
+<p>This is done by taking derivative of the Enery function with respect to the weights and set it to zero, thus obtaining 9 equations.</p>
+<p>However, the equations are not linear, so we have to use recursion (fixed-point method) to approximate the solution.</p>
+<p>&nbsp;</p>
+<h2>Results</h2>
+<table border="1">
+<tr><td align="center">Source</td><td align="center">Decolorized</td><td align="center">CCPR</td></tr>
+<tr><td><img src="files/color2gray/1.png"/></td><td><img src="files/color2gray/wco_1.jpg"/></td><td align="center">0.2716</td></tr>
+<tr><td><img src="files/color2gray/2.png"/></td><td><img src="files/color2gray/wco_2.jpg"/></td><td align="center">0.6036</td></tr>
+<tr><td><img src="files/color2gray/3.png"/></td><td><img src="files/color2gray/wco_3.jpg"/></td><td align="center">0.4329</td></tr>
+<tr><td><img src="files/color2gray/4.png"/></td><td><img src="files/color2gray/wco_4.jpg"/></td><td align="center">0.3031</td></tr>
+<tr><td><img src="files/color2gray/5.png"/></td><td><img src="files/color2gray/wco_5.jpg"/></td><td align="center">0.4480</td></tr>
+<tr><td><img src="files/color2gray/6.png"/></td><td><img src="files/color2gray/wco_6.jpg"/></td><td align="center">0.3820</td></tr>
+<tr><td><img src="files/color2gray/7.png"/></td><td><img src="files/color2gray/wco_7.jpg"/></td><td align="center">0.5445</td></tr>
+<tr><td><img src="files/color2gray/8.png"/></td><td><img src="files/color2gray/wco_8.jpg"/></td><td align="center">0.3860</td></tr>
+<tr><td><img src="files/color2gray/9.png"/></td><td><img src="files/color2gray/wco_9.jpg"/></td><td align="center">0.2036</td></tr>
+<tr><td><img src="files/color2gray/10.png"/></td><td><img src="files/color2gray/wco_10.jpg"/></td><td align="center">0.3908</td></tr>
+</table>
+<p>Notice that the CCPR values are generally higher, the contrast of the images are better.</p>
+<p>More importantly, there is no artifact around the edges, which was particularly noticeable for pictures 6,7,8 in basic implementation.</p>
+<p>&nbsp;</p>
+<h2>Performance</h2>
+<table border="1">
+  <tr>
+    <th>CCPR</th>
+    <th>Basic</th>
+    <th>WOC</th>
+    <th>rgb2gray</th>
+  </tr>
+  <tr>
+    <td align="right">1</td>
+    <td align="right">0.1765</td>
+    <td align="right">0.2716</td>
+    <td align="right">0.3008</td>
+  </tr>
+  <tr>
+    <td align="right">2</td>
+    <td align="right">0.6021</td>
+    <td align="right">0.6036</td>
+    <td align="right">0.5800</td>
+  </tr>
+  <tr>
+    <td align="right">3</td>
+    <td align="right">0.3968</td>
+    <td align="right">0.4329</td>
+    <td align="right">0.4756</td>
+  </tr>
+  <tr>
+    <td align="right">4</td>
+    <td align="right">0.2718</td>
+    <td align="right">0.3031</td>
+    <td align="right">0.3119</td>
+  </tr>
+  <tr>
+    <td align="right">5</td>
+    <td align="right">0.3235</td>
+    <td align="right">0.4480</td>
+    <td align="right">0.4397</td>
+  </tr>
+  <tr>
+    <td align="right">6</td>
+    <td align="right">0.3979</td>
+    <td align="right">0.3820</td>
+    <td align="right">0.1867</td>
+  </tr>
+  <tr>
+    <td align="right">7</td>
+    <td align="right">0.5881</td>
+    <td align="right">0.5445</td>
+    <td align="right">0.2003</td>
+  </tr>
+  <tr>
+    <td align="right">8</td>
+    <td align="right">0.4514</td>
+    <td align="right">0.3860</td>
+    <td align="right">0.0647</td>
+  </tr>
+  <tr>
+    <td align="right">9</td>
+    <td align="right">0.1721</td>
+    <td align="right">0.2036</td>
+    <td align="right">0.2531</td>
+  </tr>
+  <tr>
+    <td align="right">10</td>
+    <td align="right">0.2484</td>
+    <td align="right">0.3908</td>
+    <td align="right">0.3830</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h2>Computation Time</h2>
+<table border="1">
+  <tr>
+    <th>Time</th>
+    <th>Basic</th>
+    <th>WOC</th>
+    <th>rgb2gray</th>
+  </tr>
+  <tr>
+    <td align="right">1</td>
+    <td align="right">1.0875</td>
+    <td align="right">0.7643</td>
+    <td align="right">0.0011</td>
+  </tr>
+  <tr>
+    <td align="right">2</td>
+    <td align="right">1.2253</td>
+    <td align="right">1.0194</td>
+    <td align="right">0.0009</td>
+  </tr>
+  <tr>
+    <td align="right">3</td>
+    <td align="right">0.8818</td>
+    <td align="right">0.6879</td>
+    <td align="right">0.0008</td>
+  </tr>
+  <tr>
+    <td align="right">4</td>
+    <td align="right">0.8943</td>
+    <td align="right">0.8112</td>
+    <td align="right">0.0010</td>
+  </tr>
+  <tr>
+    <td align="right">5</td>
+    <td align="right">1.3263</td>
+    <td align="right">0.9253</td>
+    <td align="right">0.0011</td>
+  </tr>
+  <tr>
+    <td align="right">6</td>
+    <td align="right">1.2264</td>
+    <td align="right">1.0301</td>
+    <td align="right">0.0002</td>
+  </tr>
+  <tr>
+    <td align="right">7</td>
+    <td align="right">0.0477</td>
+    <td align="right">0.0449</td>
+    <td align="right">0.0003</td>
+  </tr>
+  <tr>
+    <td align="right">8</td>
+    <td align="right">0.2483</td>
+    <td align="right">0.1604</td>
+    <td align="right">0.0006</td>
+  </tr>
+  <tr>
+    <td align="right">9</td>
+    <td align="right">0.9351</td>
+    <td align="right">0.7768</td>
+    <td align="right">0.0010</td>
+  </tr>
+  <tr>
+    <td align="right">10</td>
+    <td align="right">1.2549</td>
+    <td align="right">1.0229</td>
+    <td align="right">0.0012</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h2>Conclusion</h2>
+<p>We see that the Weak Color Order Contrast Preserving Decolorization algorithm not only achieves better overall performance than the basic implementation, its computation time is also shorter.</p>
+<p>Still, these two methods are in no match in terms of computation time compared to the MATLAB defined rgb2gray function.</p>
+<p>However, while MATLAB's method usually generates decolorization with comparable quality as the other two methods, in certain cases when the color intensities are close, the result becomes unacceptable.</p>
+<p>Therefore, the WCO method is still recommended.</p>
+<table border="1">
+<tr><td align="center">Source</td><td align="center">Ours</td><td align="center">MATLAB</td></tr>
+<tr><td><img src="files/color2gray/6.png"/></td><td><img src="files/color2gray/wco_6.jpg"/></td><td><img src="files/color2gray/matlab_6.jpg"/></td></tr>
+<tr><td><img src="files/color2gray/7.png"/></td><td><img src="files/color2gray/wco_7.jpg"/></td><td><img src="files/color2gray/matlab_7.jpg"/></td></tr>
+<tr><td><img src="files/color2gray/8.png"/></td><td><img src="files/color2gray/wco_8.jpg"/></td><td><img src="files/color2gray/matlab_8.jpg"/></td></tr>
+</table>
+<p>&nbsp;</p>
+
+<h2>References</h2>
+<p>1. http://www.cs.utah.edu/~shirley/papers/ColorTransfer.pdf</p>
+<p>2. http://en.wikipedia.org/wiki/SRGB</p>
+<p>3. http://en.wikipedia.org/wiki/Lab_color_space</p>
+<p>4. http://en.wikipedia.org/wiki/Computational_complexity_of_mathematical_operations</p>
+<p>5. http://www.mathworks.com/help/matlab/ref/mldivide.html</p>
+<p> http://www.cse.cuhk.edu.hk/~leojia/papers/decolorization_ijcv14.pdf</p>
+</body>
+</html>
